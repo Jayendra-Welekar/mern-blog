@@ -1,8 +1,15 @@
 
 
+# POST http://localhost:3000/get-blog
+# Content-Type: application/json
+
+# {
+#     "blog_id": "Title-1FVuRewb1AlrzCFPw9RJRF"
+# }
+
 POST http://localhost:3000/get-profile
 Content-Type: application/json
 
 {
-    "username": "johnA_VUB"
+    "username": "jayCLvAq"
 }

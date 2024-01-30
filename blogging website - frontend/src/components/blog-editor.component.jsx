@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import logo from "../imgs/logo.png";
 import AnimationWrapper from "../common/page-animation";
 import defaultBanner from "../imgs/blog banner.png";
@@ -15,19 +15,18 @@ const BlogEditor = () => {
   let navigate = useNavigate()
 
     let { blog, blog: {title, banner, content, tags, des }, setBlog, textEditor ,setTextEditor, setEditorState, editorState } = useContext(EditorContext)
-
+    let {blog_id} = useParams()
     let { userAuth: {accessToken} } = useContext(UserContext)
 
     useEffect(()=>{
       if(!textEditor.isReady){
         setTextEditor(new EditorJs({
           holderId: "textEditor",
-          data: content,
+          data: Array.isArray(content) ? content[0] : content,
           tools: tools,
           placeholder: "Let's write an awesome story"
         }))
       }
-      
     }, [])
 
   const handleBannerUpload = async (e) => {
@@ -118,7 +117,6 @@ const BlogEditor = () => {
  }
  
  const handleSaveDraft = (e) => {
-  console.log(accessToken)
 
         if(e.target.className.includes("disable")){
             return;
@@ -140,7 +138,7 @@ const BlogEditor = () => {
   
   
   
-          axios.post(import.meta.env.VITE_SERVER_DOMAIN + "/create-blog", blogObj, {
+          axios.post(import.meta.env.VITE_SERVER_DOMAIN + "/create-blog", {...blogObj, id: blog_id}, {
               headers: {
                   'Authorization': `Bearer ${accessToken}`
               }
