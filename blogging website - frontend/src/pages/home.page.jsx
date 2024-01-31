@@ -104,7 +104,7 @@ const HomePage = () => {
                         <>
                             {
                                 (blogs == null ? <Loader /> : blogs.results.length ? (blogs.results.map((blog, i) => {
-                                    return <AnimationWrapper transition={{ duration: 1, delay: i * .1 }} >
+                                    return <AnimationWrapper transition={{ duration: 1, delay: i * .1 }} key={i} >
                                         <BlogPostCard content={blog} author={blog.author.personal_info} />
                                     </AnimationWrapper>
                                 })) : <NoDataMessage message="No Blogs Published" />)
@@ -114,7 +114,7 @@ const HomePage = () => {
 
                         {
                             trendingBlogs == null ? <Loader /> : trendingBlogs.length ? (trendingBlogs.map((blog, i) => {
-                                return <AnimationWrapper transition={{ duration: 1, delay: i * .1 }} >
+                                return <AnimationWrapper key={i} transition={{ duration: 1, delay: i * .1 }} >
                                     <MinimalBlogPost blog={blog} index={i} />
                                 </AnimationWrapper>
                             })) : <NoDataMessage message="No Blogs Published" />
@@ -148,7 +148,7 @@ const HomePage = () => {
 
                             {
                                 trendingBlogs == null ? <Loader /> :  (trendingBlogs.length ? (trendingBlogs.map((blog, i) => {
-                                    return <AnimationWrapper transition={{ duration: 1, delay: i * .1 }} >
+                                    return <AnimationWrapper key={i} transition={{ duration: 1, delay: i * .1 }} >
                                         <MinimalBlogPost blog={blog} index={i} />
                                     </AnimationWrapper>
                                 })) : <NoDataMessage message="No Trending blogs" />)

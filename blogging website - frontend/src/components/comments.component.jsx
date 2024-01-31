@@ -13,8 +13,10 @@ export const fetchComments  = async ({ skip = 0, blog_id, setParentCommentCountF
     await axios.post(import.meta.env.VITE_SERVER_DOMAIN + "/get-blog-comments", { blog_id, skip })
     .then(({ data }) => {
 
+        
+
         data.map(comment => {
-            comment.childrenLevel = 0;
+            comment.childrenLevel = comment.isReply ? 1 : 0;
         })
 
         setParentCommentCountFun(preVal => preVal + data.length)

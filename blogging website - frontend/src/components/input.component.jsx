@@ -1,6 +1,6 @@
 import { useState } from "react"
 
-const InputBox = ({ name, type, id, value, placeholder, icon }) => {
+const InputBox = ({ name, type, id, value, placeholder, icon, disable=false }) => {
    
     const [passVisible, setPassVisible] = useState(false)
 
@@ -11,6 +11,7 @@ const InputBox = ({ name, type, id, value, placeholder, icon }) => {
                 type={type === "password" ? (passVisible ? "text" : "password") : type}
                 placeholder={placeholder}
                 id={id}
+                disabled={disable}
                 defaultValue={value}
                 className="input-box"
             />
@@ -19,7 +20,7 @@ const InputBox = ({ name, type, id, value, placeholder, icon }) => {
 
             {
                 type === "password" ? 
-                <i class={"fi fi-rr-eye" +( passVisible ? "" : "-crossed" )+ " input-icon left-[auto] right-4 cursor-pointer"}
+                <i className={"fi fi-rr-eye" +( passVisible ? "" : "-crossed" )+ " input-icon left-[auto] right-4 cursor-pointer"}
                     onClick={()=>{setPassVisible(currentVal => !currentVal)}}
                 ></i>
                 :""

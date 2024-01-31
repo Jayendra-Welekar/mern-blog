@@ -78,7 +78,7 @@ const SearchPage = ()=>{
                     <>
                         {   
                             (blogs == null ? <Loader /> : blogs.results.length ? (blogs.results.map((blog,i) => {
-                                return <AnimationWrapper transition={{duration: 1, delay: i * .1 }} >
+                                return <AnimationWrapper key={i} transition={{duration: 1, delay: i * .1 }} >
                                     <BlogPostCard content={blog} author={blog.author.personal_info} />
                                 </AnimationWrapper>
                             })) : <NoDataMessage message="No BlogsPublished" />)

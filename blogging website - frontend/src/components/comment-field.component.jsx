@@ -8,8 +8,6 @@ const CommentField = ({ action="comment", replyingTo,  index ,setReplying })=>{
     
     let {blog, setBlog, setTotalParentCommentsLoaded, blog: { _id, author: { _id: blog_author}, comments, comments: {results: commentsArray}, activity,activity: {total_comments, total_parent_comments} } } = useContext(BlogContext)
 
-    console.log(blog)
-
     let { userAuth: {accessToken, username, fullname, profile_img} } = useContext(UserContext)
 
     const [comment, setComment] = useState("")
@@ -61,7 +59,6 @@ const CommentField = ({ action="comment", replyingTo,  index ,setReplying })=>{
 
             }else{
                 data.childrenLevel = 0
-
                 newCommentArray = [ data, ...commentsArray ]
             }
 

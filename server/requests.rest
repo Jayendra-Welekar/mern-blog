@@ -7,9 +7,11 @@
 #     "blog_id": "Title-1FVuRewb1AlrzCFPw9RJRF"
 # }
 
-POST http://localhost:3000/get-profile
+POST http://localhost:3000/change-password
 Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OWE4ZDUwMWIwYTYyYzhiMzQ4NmE4MCIsImlhdCI6MTcwNjYzNzM2NX0.zZ_5vUia5GoRb5L7we5M5sLdfchaeyQP4zTWJMoXh3c
 
 {
-    "username": "jayCLvAq"
+    "currentPassword": "Welekar@2004",
+    "newPassword": "Welekar@2003"
 }

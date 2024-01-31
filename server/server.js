@@ -562,7 +562,7 @@ server.post("/get-blog-comments", (req, res)=>{
 
     let maxLimit = 5;
 
-    Comment.find({ blog_id })
+    Comment.find({ blog_id, isReply: false })
     .populate("commented_by", "personal_info.username personal_info.fullname personal_info.profile_img")
     .skip(skip)
     .limit(maxLimit)
@@ -652,6 +652,116 @@ server.post('/delete-comment', verifyJWT , (req, res) => {
         } else {
             return res.status(403).json({error: "You can no delete this comment"})
         }
+    })
+
+})
+
+server.post("/change-password", verifyJWT, (req, res) => {
+
+    let { currentPassword, newPassword } = req.body
+
+    if(!passwordRegex.test(currentPassword) || !passwordRegex.test(newPassword)){
+        return res.status(403).json({error: "Password should be 6 to 20 characters long with a numeric, 1 lowercase and 1 uppercase letters"})
+     }
+
+     User.findOne({ _id: req.user })
+     .then((user) => {
+        if(user.google_auth){
+            return res.status(403).json({
+                error: "You can't change accounts password coz you logged in throught google"
+            })
+        }
+
+        bcryptjs.compare(currentPassword, user.personal_info.password, (err, result) => {
+            if(err) {
+                return res.status(500).json({error: "Some error occured while changing the password, please try again later"})
+            }
+
+            if(!result){
+                return res.status(403).json({error: "Incorrect current password"})
+            }
+
+            bcryptjs.hash(newPassword, 10, (err, hashed_pass) => {
+                User.findOneAndUpdate({_id: req.user}, { "personal_info.password": hashed_pass })
+                .then((u) => {
+                    return res.status(200).json({status: "password Changed"})
+                })
+                .catch(err => {
+                    return res.status(500).json({error: "Some error occrued while saving new password, please try again later"})
+                })
+            })
+
+        })
+
+     })
+     .catch(err => {
+        console.log(err)
+        res.status(500).json({error: "User not found"})
+     })
+
+})
+
+server.post("/update-profile-img", verifyJWT, async (req, res) => {
+    let { url } = req.body
+
+    User.findOneAndUpdate({ _id: req.user }, {"personal_info.profile_img": url} )
+    .then(() => {
+        return res.status(200).json({ profile_img: url })
+    })
+    .catch(err => {
+        return res.status(500).json({error: err.message})
+    })
+
+})
+
+server.post("/update-profile", verifyJWT, (req, res)=>{
+    let { username, bio, social_links } = req.body;
+
+    let bioLimit = 150;
+
+    if(username.length < 3){
+        return res.status(403).json({error: "Username should be atleast three letter long"})
+    }
+
+    if(bio.length > bioLimit){
+        return res.status(403).json({error: `Bio should not be more than ${bioLimit} characters`})
+    }
+
+    let socialLinksArr = Object.keys(social_links);
+
+    try {
+        
+        for(let i = 0; i < socialLinksArr.length; i++){
+            if(social_links[socialLinksArr[i]].length){
+                let hostname = new URL(social_links[socialLinksArr[i]]).hostname;       
+
+                if(!hostname.includes(`${socialLinksArr[i].com}`) && socialLinksArr[i] != 'website'){
+                     return res.status(403).json({error: `${socialLinksArr[i]} link is invalid. You must enter a full link`})
+                }
+            }
+        }
+
+    } catch (error) {
+        return res.status(500).json({error: "You must provide full social links with https(s) included"})
+    }
+
+    let UpdateObj = {
+        "personal_info.username": username,
+        "personal_info.bio": bio,
+        social_links
+    }
+
+    User.findOneAndUpdate({_id: req.user}, UpdateObj, {
+        runValidators: true
+    })
+    .then(()=>{
+        return res.status(200).json({ username })
+    })
+    .catch(err => {
+        if(err.code == 1100){
+            return res.status(409).json({error: "Username is already taken"})
+        }
+        return res.status(500).json({error: err.message})
     })
 
 })
