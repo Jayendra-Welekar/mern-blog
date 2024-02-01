@@ -33,6 +33,9 @@ const SideNav = ()=>{
 
 
     let { accessToken } = JSON.parse(sessionStorage.getItem("user"))
+    
+    let { userAuth: {new_notification_available} } = useContext(UserContext) 
+
     useEffect(() => {
         setShowSideNav(false);
         pageStateTab.current.click();
@@ -65,9 +68,14 @@ const SideNav = ()=>{
                             Blogs
                         </NavLink>
                         
-                        <NavLink to="/dashboard/notification" onClick={(e) => {setPageState(e.target.innerText)}} className="sidebar-link">
-                            <i className="fi fi-rr-bell"></i>
-                            Blogs
+                        <NavLink to="/dashboard/notifications" onClick={(e) => {setPageState(e.target.innerText)}} className="sidebar-link">
+                            <div className="relative">
+                                <i className="fi fi-rr-bell"></i>
+                                {
+                                    new_notification_available ? <span className="bg-red w-2 h-2 rounded-full absolute z-10 top-0 right-0"></span> : ""
+                                }
+                            </div>
+                            Notifications
                         </NavLink>
 
                         <NavLink to="/editor" onClick={(e) => {setPageState(e.target.innerText)}} className="sidebar-link">

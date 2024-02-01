@@ -503,7 +503,7 @@ server.post("/add-comment", verifyJWT, (req, res)=>{
 
     let user_id = req.user;
 
-    let { _id, comment, blog_author, replyingTo } = req.body;
+    let { _id, comment, blog_author, replyingTo, notification_id } = req.body;
 
     if(!comment.length) {
         return res.status(403).json({ error: "Write something to leave a comment" })
@@ -547,7 +547,10 @@ server.post("/add-comment", verifyJWT, (req, res)=>{
             await Comment.findOneAndUpdate({ _id: replyingTo }, { $push: { children: commentFile._id } } )
             .then(replyingToComment => { notificationObj.notification_for = replyingToComment.commented_by })
 
-            
+            if(notification_id){
+                Notification.findOneAndUpdate({ _id: notification_id }, {reply: commentFile._id})
+                .then(notification => console.log('notification updated'))
+            }
 
         }
 
@@ -619,7 +622,7 @@ const deleteComment = (_id) => {
         Notification.findOneAndDelete({ comment: _id })
         .then(notification => console.log('comment notification deleted'))
 
-        Notification.findOneAndDelete({reply: _id}).then(notification => console.log('reply notification deleted'))
+        Notification.findOneAndUpdate({reply: _id}, {$unset: { reply: 1 }}).then(notification => console.log('reply notification deleted'))
 
         Blog.findOneAndUpdate({_id: comment.blog_id}, { $pull: {comments: _id}}, {$inc: {'activity.total_parent_comments': -1, 'activity.total_parent_comments': comment.parent ? 0 : -1}})
         .then(blog => {
@@ -650,6 +653,7 @@ server.post('/delete-comment', verifyJWT , (req, res) => {
             return res.status(200).json({ status: "done" })
 
         } else {
+            console.log("no delete")
             return res.status(403).json({error: "You can no delete this comment"})
         }
     })
@@ -764,6 +768,93 @@ server.post("/update-profile", verifyJWT, (req, res)=>{
         return res.status(500).json({error: err.message})
     })
 
+})
+
+server.get("/new-notification", verifyJWT, (req, res)=>{
+
+    let user_id = req.user;
+
+    Notification.exists({ notification_for: user_id, seen: false, user: { $ne: user_id } })
+    .then(result => {
+        if( result ){
+            return res.status(200).json({ new_notification_available: true })
+        } else {
+            return res.status(200).json({ new_notification_available: false })
+        }
+    })
+    .catch(err => {
+        console.log(err.message)
+        return res.status(500).json({ error: err.message })
+    })
+
+})
+
+server.post("/notifications", verifyJWT, (req, res)=>{
+    let user_id = req.user
+
+    let { page, filter, deletedDocCount } = req.body
+
+    let maxLimit = 10;
+
+    let findQuery = { notification_for: user_id, user: {$ne: user_id} }
+
+    let skipDocs = (page-1)*maxLimit
+
+    if( filter != 'all' ){
+        findQuery.type = filter
+    }
+
+    if(deletedDocCount){
+        skipDocs -= deletedDocCount
+    }
+
+    console.log("reched Here")
+
+    Notification.find(findQuery)
+    .skip(skipDocs)
+    .limit(maxLimit)
+    .populate("blog", "title blog_id")
+    .populate("user", "personal_info.fullname personal_info.username personal_info.profile_img")
+    .populate("comment", "comment")
+    .populate("replied_on_comment", "comment")
+    .populate("reply", "comment")
+    .sort({ createdAt: -1 })
+    .select(" createdAt type seen reply ")
+    .then(notifications => {
+        
+        Notification.updateMany(findQuery, {seen: true})
+        .skip(skipDocs)
+        .limit(maxLimit)
+        .then(()=>{
+            console.log('notification seen')
+        })
+        return res.status(200).json({notifications})
+
+    })
+    .catch(err => {
+        console.log(err.message)
+        return res.json(500).json({ error: err.message })
+    })
+})
+
+server.post("/all-notifications-count", verifyJWT, (req, res) => {
+    let user_id = req.user
+
+    let { filter } = req.body
+    
+    let findQuery = { notification_for: user_id, user: {$ne: user_id} }
+
+    if(filter != 'all'){
+        findQuery.type = filter
+    }
+
+    Notification.countDocuments(findQuery)
+    .then(count => {
+        return res.status(200).json({ totalDocs: count })
+    })
+    .catch(err => {
+        return res.status(500).json({error: err.message})
+    })
 })
 
 server.listen(PORT, ()=>{

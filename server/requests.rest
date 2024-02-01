@@ -7,11 +7,16 @@
 #     "blog_id": "Title-1FVuRewb1AlrzCFPw9RJRF"
 # }
 
-POST http://localhost:3000/change-password
+GET http://localhost:3000/new-notification
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OWE4ZDUwMWIwYTYyYzhiMzQ4NmE4MCIsImlhdCI6MTcwNjYzNzM2NX0.zZ_5vUia5GoRb5L7we5M5sLdfchaeyQP4zTWJMoXh3c
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OWE4ZDUwMWIwYTYyYzhiMzQ4NmE4MCIsImlhdCI6MTcwNjcyNzk3MX0.AG_gz-GPE11fLEaS2yMx2_1RzEfhAlKVQ2ICsDLC1Hk
 
-{
-    "currentPassword": "Welekar@2004",
-    "newPassword": "Welekar@2003"
-}
+
+
+# POST http://localhost:3000/signin
+# Content-Type: application/json
+
+# {
+#     "email": "jay@gmail.com",
+#     "password": "Welekar@2003"
+# }
