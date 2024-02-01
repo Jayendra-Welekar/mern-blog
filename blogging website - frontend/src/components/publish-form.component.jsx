@@ -100,18 +100,15 @@ const PublishForm = ()=>{
             }
         })
         .then(() => {
-        console.log("1")
             
             e.target.classList.remove('disable')
-            console.log("1")
 
             e.target.classList.remove('disable')
             toast.dismiss(loadingToast)
             toast.success("Published 👍")
-            console.log("1")
 
             setTimeout(() => {
-                navigate("/")
+                navigate("/dashboard/blogs")
             }, 500)
 
         })

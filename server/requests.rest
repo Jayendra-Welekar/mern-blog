@@ -7,10 +7,14 @@
 #     "blog_id": "Title-1FVuRewb1AlrzCFPw9RJRF"
 # }
 
-GET http://localhost:3000/new-notification
+POST http://localhost:3000/user-written-blogs
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OWE4ZDUwMWIwYTYyYzhiMzQ4NmE4MCIsImlhdCI6MTcwNjc3MjkxOX0.jdULRfyYzwvfcfPX4BEVzWlhFNLn-MH5P5Al18nP4yY
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1OWE4ZDUwMWIwYTYyYzhiMzQ4NmE4MCIsImlhdCI6MTcwNjcyNzk3MX0.AG_gz-GPE11fLEaS2yMx2_1RzEfhAlKVQ2ICsDLC1Hk
 
+{
+    "page": 1,
+    "draft": "false"
+}
 
 
 # POST http://localhost:3000/signin
