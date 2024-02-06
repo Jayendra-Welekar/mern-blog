@@ -114,11 +114,20 @@
     .blog-index{
         @apply text-4xl sm:text-3xl lg:text-5xl font-bold text-grey leading-none;
     }
+
+    ::-webkit-scrollbar{
+        @apply w-2 bg-grey rounded-full
+    }
+    ::-webkit-scrollbar-thumb {
+        @apply bg-dark-grey rounded-full
+
+    }
 }
 
 .ce-block__content, .ce-toolbar__content{
     max-width: 900px;
 }
+
 
 .cdx-settings-button[data-tune='withBorder'],
 .cdx-settings-button[data-tune='withBackground'],

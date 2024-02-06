@@ -15,7 +15,7 @@ const Notifications = ()=>{
     const [ filter, setFilter ] = useState('all')
     const [ notifications, setNotifications] = useState(null)
 
-    let filters = ['all', 'like', 'comment', 'reply']
+    let filters = ['all', 'like', 'comment', 'reply', 'follow']
 
     const fetchNotifications = ({ page, deletedDocCount=0 })=>{
         axios.post(import.meta.env.VITE_SERVER_DOMAIN+"/notifications", {
@@ -26,7 +26,7 @@ const Notifications = ()=>{
             }
         })
         .then(async ({ data : {notifications: data}})=>{
-
+            
             if(new_notification_available){
                 setUserAuth({ ...userAuth, new_notification_available: false })
             }

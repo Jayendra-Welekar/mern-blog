@@ -101,7 +101,6 @@ server.post("/signup", (req, res) => {
     bcryptjs.hash(password, 10, async (error, hashed_pass) => {
 
         let username = await generateUsername(email)
-
         let user = new User({
             personal_info:{fullname, email, password: hashed_pass, username}
         })
@@ -222,22 +221,67 @@ server.post("/blog-editor/upload-img", upload.single('img'), async (req, res) =>
     }
 });
 
-server.post('/latest-blogs', (req, res) => {
-    let { page } = req.body
-    let maxLimit = 10
+const sortArray = (blogs, following)=>{
+    const followed = blogs.filter(blog => following.includes(blog.author.personal_info.username))
+    const notFollowed = blogs.filter(blog => !following.includes(!blog.author.personal_info.username))
+    return [...followed, ...notFollowed]
+}
 
-    Blog.find({ draft: false }).populate("author", "personal_info.profile_img personal_info.username personal_info.fullname -_id")
-    .sort({ "publishedAt": -1 })
-    .select("blog_id title des banner activity tags publishedAt -_id")
-    .skip((page - 1) * maxLimit)
-    .limit(maxLimit)
-    .then(blogs => {
-        return res.status(200).json({ blogs })
-    })
-    .catch(err => {
-        console.log("error")
-        return res.status(500).json({ error: err.message })
-    })
+server.post('/latest-blogs', (req, res) => {
+    let { page, accessToken } = req.body
+    let maxLimit = 10
+    let following = []
+    
+    if(accessToken){
+        let user_id;
+        jwt.verify(accessToken, process.env.JWT_SECRET, (err, user) => {
+            if(err) {
+                return res.status(403).json({ error: "access token is invalid" })
+            }
+    
+            user_id = user.id
+        })
+        
+        User.findOne({_id: user_id})
+        .populate("follow.following", "personal_info.username")
+        .then(result => {
+            result.follow.following.map(obj=>{
+                console.log(obj.personal_info.username)
+                following.push(obj.personal_info.username)
+            })
+            Blog.find({ draft: false }).populate("author", "personal_info.profile_img personal_info.username personal_info.fullname -_id")
+            .sort({ "publishedAt": -1 })
+            .select("blog_id title des banner activity tags publishedAt -_id")
+            .skip((page - 1) * maxLimit)
+            .limit(maxLimit)
+            .then(blogs => {
+                blogs = sortArray(blogs, following)
+                return res.status(200).json({ blogs })
+            })
+            .catch(err => {
+                console.log("error")
+                return res.status(500).json({ error: err.message })
+            })
+        })
+    } else {
+        Blog.find({ draft: false }).populate("author", "personal_info.profile_img personal_info.username personal_info.fullname -_id")
+        .sort({ "publishedAt": -1 })
+        .select("blog_id title des banner activity tags publishedAt -_id")
+        .skip((page - 1) * maxLimit)
+        .limit(maxLimit)
+        .then(blogs => {
+            blogs = sortArray(blogs, following)
+            return res.status(200).json({ blogs })
+        })
+        .catch(err => {
+            console.log("error")
+            return res.status(500).json({ error: err.message })
+        })
+    }
+
+
+
+   
 })
 
 server.get('/tending-blogs', (req, res)=>{
@@ -411,10 +455,25 @@ server.post('/search-users', (req, res)=>{
 
 })
 
+server.post('/get-minimal-profile', async ( req, res)=>{
+    let { userId } = req.body
+
+    User.findOne({_id: userId})
+    .select("personal_info.fullname personal_info.username personal_info.profile_img")
+    .then(user => {
+        return res.status(200).json({user})
+    })
+    .catch(err => {
+        console.log(err)
+        res.status(500).json({error: err.message})
+    })
+})
+
 server.post('/get-profile', async (req, res)=>{
     let {username} = req.body
     User.findOne({ "personal_info.username": username })
     .select("-personal_info.password -google_auth -updatedAt -blogs")
+    .populate("follow", "followed_by.username following.username")
     .then(user=>{
         return res.status(200).json({user})
     })
@@ -423,6 +482,22 @@ server.post('/get-profile', async (req, res)=>{
         res.status(500).json({err: err.message})
     })
    
+})
+
+server.post('/get-following', verifyJWT, (req, res)=>{
+    let user_id = req.user
+
+    User.findOne({_id: user_id})
+    .select("follow")
+    .populate("follow", "following.username")
+    .then(user => {
+        return res.status(200).json({user})
+    })
+    .catch(err => {
+        console.log(err)
+        res.status(500).json({error: err.message})
+    })
+
 })
 
 server.post("/get-blog", (req, res)=>{
@@ -791,7 +866,6 @@ server.get("/new-notification", verifyJWT, (req, res)=>{
 
 server.post("/notifications", verifyJWT, (req, res)=>{
     let user_id = req.user
-
     let { page, filter, deletedDocCount } = req.body
 
     let maxLimit = 10;
@@ -808,33 +882,37 @@ server.post("/notifications", verifyJWT, (req, res)=>{
         skipDocs -= deletedDocCount
     }
 
-    console.log("reched Here")
-
-    Notification.find(findQuery)
-    .skip(skipDocs)
-    .limit(maxLimit)
-    .populate("blog", "title blog_id")
-    .populate("user", "personal_info.fullname personal_info.username personal_info.profile_img")
-    .populate("comment", "comment")
-    .populate("replied_on_comment", "comment")
-    .populate("reply", "comment")
-    .sort({ createdAt: -1 })
-    .select(" createdAt type seen reply ")
-    .then(notifications => {
-        
-        Notification.updateMany(findQuery, {seen: true})
+    
+    let query =  Notification.find(findQuery)
         .skip(skipDocs)
         .limit(maxLimit)
-        .then(()=>{
-            console.log('notification seen')
-        })
-        return res.status(200).json({notifications})
+        .populate("user", "personal_info.fullname personal_info.username personal_info.profile_img")
+        .sort({ createdAt: -1 })
+        .select(" createdAt type seen reply ")
+    if(filter == 'all' || filter == 'filter'){
+        query = query.populate("blog", "title blog_id")
+        .populate("comment", "comment")
+        .populate("replied_on_comment", "comment")
+        .populate("reply", "comment")
+    }
 
-    })
-    .catch(err => {
-        console.log(err.message)
-        return res.json(500).json({ error: err.message })
-    })
+        query.then(notifications => {
+            Notification.updateMany(findQuery, {seen: true})
+            .skip(skipDocs)
+            .limit(maxLimit)
+            .then(()=>{
+                console.log('notification seen')
+            })
+            return res.status(200).json({notifications})
+
+        })
+        .catch(err => {
+            console.log(err.message)
+            return res.json(500).json({ error: err.message })
+        })
+    
+
+    
 })
 
 server.post("/all-notifications-count", verifyJWT, (req, res) => {
@@ -924,6 +1002,51 @@ server.post("/delete-blog", verifyJWT, (req, res)=>{
     })
 
 })
+
+server.post('/handle-unfollow', verifyJWT, (req, res)=>{
+    let user_id = req.user
+
+    let { profile_id } = req.body
+
+    User.findOneAndUpdate({ _id: user_id }, { $pull: { "follow.following": profile_id } }).then((me)=>{
+        User.findOneAndUpdate({ _id: profile_id }, { $pull: { "follow.followed_by": user_id } }).then(()=>{
+            return res.status(200).json({"data": me})
+        })
+        
+    })
+    .catch(err => {
+        return res.status(500).json({error: err.message})
+    })
+})
+
+server.post('/handle-follow', verifyJWT, (req, res)=>{
+
+    let user_id = req.user
+
+    let { profile_id } = req.body
+
+    
+
+    User.findOneAndUpdate({ _id: user_id }, { $push: { "follow.following": profile_id } }).then(()=>{
+        User.findOneAndUpdate({ _id: profile_id }, { $push: { "follow.followed_by": user_id } }).then(()=>{
+
+            let follow = new Notification({
+                type: "follow",
+                notification_for: profile_id,
+                user: user_id
+            })
+
+            follow.save().then(notification => console.log(notification))
+
+            return res.status(200).json({"success": true})
+
+        })
+    })
+    .catch(err => {
+        return res.status(500).json({error: err.message})
+    })
+})
+
 
 server.listen(PORT, ()=>{
     console.log("listening on port ", PORT)

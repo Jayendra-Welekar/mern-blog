@@ -9,10 +9,12 @@ const NotificationCard = ({ data, index, notificationState })=>{
 
     let [isReplying, setReplying] = useState(false)
 
-    let { seen, reply, replied_on_comment, createdAt , comment, type, user, user: {personal_info: {profile_img, fullname, username}}, blog: { _id, blog_id, title }, _id: notification_id } = data
+    let { seen, createdAt , type, user, user: {personal_info: {profile_img, fullname, username}}, _id: notification_id } = data
+
+    let { reply, replied_on_comment, comment, blog:{ _id, blog_id, title } } = type != 'follow' ? data : {reply: '', replied_on_comment: '', comment: '', blog: {_id: '', blog_id: '', title: ''}}
+
 
     let { userAuth: { username: author_username , profile_img: author_profile_img, accessToken} } = useContext(UserContext)
-
     let { notifications, notifications: {results, totalDocs}, setNotifications} = notificationState
 
     const handleReplyClick = ()=>{
@@ -59,22 +61,23 @@ const NotificationCard = ({ data, index, notificationState })=>{
                         <span className="font-normal">
                             {
                                 type == 'like' ? "liked your blog" :
-                                type == 'comment' ? "commented on" : "replied on"
+                                type == 'comment' ? "commented on" : 
+                                type=='follow' ? "" : "replied on"
                             }
                         </span>
                     </h1>
 
                     {
-                        type == 'reply'?
+                        type == 'reply' ?
                         <div className="p-4 mt-4 rounded-md bg-grey">
                             <p>{ replied_on_comment.comment }</p>
                         </div> : 
-                        <Link to={`/blog/${blog_id}`} className="font-medium text-dark-grey hover:underline link-clamp-1">{`"${title}"`}</Link>
+                        type == 'follow' ? <p>Is following You</p> : <Link to={`/blog/${blog_id}`} className="font-medium text-dark-grey hover:underline link-clamp-1">{`"${title}"`}</Link>
                     }
                 </div>
             </div>
             {
-                type != 'like' ? 
+                type != 'like' && type != 'follow'? 
                 <p className="ml-14 pl-5 font-gelasio text-xl my-5">{comment.comment}</p> : ""
             }
 
@@ -83,7 +86,7 @@ const NotificationCard = ({ data, index, notificationState })=>{
                 <p>{getDay(createdAt)}</p>
 
                 {
-                    type != 'like' ?
+                    type != 'like' && type != 'follow'?
                     <>  {
                         !reply ? <button className="underline hover:text-black" onClick={handleReplyClick}>Reply</button> : ""
                     }

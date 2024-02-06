@@ -62,6 +62,18 @@ const userSchema = mongoose.Schema({
             default: "",
         }
     },
+    follow:{
+        followed_by: {
+            type: [Schema.Types.ObjectId],
+            ref: 'users',
+            default: []
+        },
+        following: {
+            type: [Schema.Types.ObjectId],
+            ref: 'users',
+            default: []
+        }
+    },
     account_info:{
         total_posts: {
             type: Number,

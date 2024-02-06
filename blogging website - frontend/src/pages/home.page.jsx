@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useContext, useEffect, useState } from "react"
 import AnimationWrapper from "../common/page-animation"
 import InPageNavigation from "../components/inpage-navigation.component"
 import axios from "axios"
@@ -9,6 +9,7 @@ import { activeTabRef } from "../components/inpage-navigation.component"
 import NoDataMessage from "../components/nodata.component"
 import { filterPaginationData } from "../common/filter-pagination-data"
 import LoadMoreDataBtn from "../components/load-more.component"
+import { UserContext } from "../App"
 
 const HomePage = () => {
 
@@ -16,11 +17,20 @@ const HomePage = () => {
     let [trendingBlogs, setTrendingBlog] = useState(null)
     let [ pageState, setPageState ] = useState("home")
 
+    let item = sessionStorage.getItem("user")
+
+    let accessToken = null
+    if(item){
+        let token = JSON.parse(item).accessToken
+        accessToken = token
+    } 
+    
+
+
     let categories = ["programming", "hollywood", "film making", "social media", "cooking", "tech", "finances", "travel"]
 
-
     const fetchLatestBlogs = ({page= 1}) => {
-        axios.post(import.meta.env.VITE_SERVER_DOMAIN + "/latest-blogs", { page })
+        axios.post(import.meta.env.VITE_SERVER_DOMAIN + "/latest-blogs", { page, accessToken })
             .then(async ({ data }) => {
                 let formatData = await filterPaginationData({
                     state: blogs,
